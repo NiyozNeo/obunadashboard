@@ -12,24 +12,8 @@ import {
 } from "@/components/ui/sidebar";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useMemo, useState } from "react";
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-}
-const users = [
-    { id: 1, name: "John Doe", email: "john@example.com", role: "Admin" },
-    { id: 2, name: "Jane Smith", email: "jane@example.com", role: "User" },
-    { id: 3, name: "Bob Johnson", email: "bob@example.com", role: "Editor" },
-    { id: 4, name: "Alice Brown", email: "alice@example.com", role: "User" },
-    { id: 5, name: "Charlie Davis", email: "charlie@example.com", role: "Editor" },
-    { id: 6, name: "Eva White", email: "eva@example.com", role: "User" },
-    { id: 7, name: "Frank Miller", email: "frank@example.com", role: "Admin" },
-    { id: 8, name: "Grace Lee", email: "grace@example.com", role: "User" },
-    { id: 9, name: "Henry Wilson", email: "henry@example.com", role: "Editor" },
-    { id: 10, name: "Ivy Taylor", email: "ivy@example.com", role: "User" },
-  ]
+
+
 
 export default function Home() {
     const [currentPage, setCurrentPage] = useState(1)
@@ -53,6 +37,26 @@ export default function Home() {
   const indexOfLastUser = currentPage * usersPerPage
   const indexOfFirstUser = indexOfLastUser - usersPerPage
   const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser)
+
+  interface User {
+    id: number;
+    name: string;
+    email: string;
+    role: string;
+  }
+
+  const users: User[] = [
+    { id: 1, name: "John Doe", email: "john@example.com", role: "Admin" },
+    { id: 2, name: "Jane Smith", email: "jane@example.com", role: "User" },
+    { id: 3, name: "Bob Johnson", email: "bob@example.com", role: "Editor" },
+    { id: 4, name: "Alice Brown", email: "alice@example.com", role: "User" },
+    { id: 5, name: "Charlie Davis", email: "charlie@example.com", role: "Editor" },
+    { id: 6, name: "Eva White", email: "eva@example.com", role: "User" },
+    { id: 7, name: "Frank Miller", email: "frank@example.com", role: "Admin" },
+    { id: 8, name: "Grace Lee", email: "grace@example.com", role: "User" },
+    { id: 9, name: "Henry Wilson", email: "henry@example.com", role: "Editor" },
+    { id: 10, name: "Ivy Taylor", email: "ivy@example.com", role: "User" },
+  ];
 
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
@@ -81,7 +85,7 @@ export default function Home() {
         <SidebarTrigger />
         <SidebarInset>
           <div className="py-10">
-            <h1 className="text-2xl font-bold mb-5">To&apos;lovlar tarixi</h1>
+            <h1 className="text-2xl font-bold mb-5">Kanallar</h1>
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center space-x-2">
                 <Label htmlFor="role-filter">Filter by Role:</Label>

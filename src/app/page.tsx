@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/card";
 import { Overview } from "./components/overview";
 import { RecentSales } from "./components/recent-sales";
+import SelectWithSearch from "@/components/select-with-search";
 export default function Home() {
   return (
     <div className="font-[family-name:var(--font-geist-sans)]">
@@ -35,6 +36,7 @@ export default function Home() {
               <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
               <div className="flex items-center space-x-2">
                 <CalendarDateRangePicker />
+                <SelectWithSearch />
                 <Button size="sm">
                   <Download className="mr-2 h-4 w-4" />
                   Download

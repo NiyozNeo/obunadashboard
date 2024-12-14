@@ -20,7 +20,7 @@ import {
 const items = [
   {
     title: "Home",
-    url: "#",
+    url: "/",
     icon: Home,
   },
   {
@@ -30,27 +30,27 @@ const items = [
   },
   {
     title: "Subscriptions",
-    url: "#",
+    url: "/subscriptions",
     icon: UserCheck2,
   },
   {
     title: "Users",
-    url: "#",
+    url: "/users",
     icon: Users2,
   },
   {
     title: "Channels",
-    url: "#",
+    url: "/channels",
     icon: TvMinimal,
   },
   {
     title: "Tariffs",
-    url: "#",
+    url: "/tariffs",
     icon: CircleDollarSign,
   },
   {
     title: "Reports",
-    url: "#",
+    url: "/reports",
     icon: FileChartColumn,
   },
 ];

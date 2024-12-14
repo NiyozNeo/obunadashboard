@@ -81,7 +81,7 @@ export default function Home() {
         <SidebarTrigger />
         <SidebarInset>
           <div className="py-10">
-            <h1 className="text-2xl font-bold mb-5">To&apos;lovlar tarixi</h1>
+            <h1 className="text-2xl font-bold mb-5">Kanallar</h1>
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center space-x-2">
                 <Label htmlFor="role-filter">Filter by Role:</Label>
