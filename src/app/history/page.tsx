@@ -1,78 +1,78 @@
 "use client";
-import { AppSidebar } from "@/components/app-sidebar";
+
+import { useState, useEffect } from "react";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useMemo, useState } from "react";
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-}
-const users = [
-    { id: 1, name: "John Doe", email: "john@example.com", role: "Admin" },
-    { id: 2, name: "Jane Smith", email: "jane@example.com", role: "User" },
-    { id: 3, name: "Bob Johnson", email: "bob@example.com", role: "Editor" },
-    { id: 4, name: "Alice Brown", email: "alice@example.com", role: "User" },
-    { id: 5, name: "Charlie Davis", email: "charlie@example.com", role: "Editor" },
-    { id: 6, name: "Eva White", email: "eva@example.com", role: "User" },
-    { id: 7, name: "Frank Miller", email: "frank@example.com", role: "Admin" },
-    { id: 8, name: "Grace Lee", email: "grace@example.com", role: "User" },
-    { id: 9, name: "Henry Wilson", email: "henry@example.com", role: "Editor" },
-    { id: 10, name: "Ivy Taylor", email: "ivy@example.com", role: "User" },
-  ]
+import { AppSidebar } from "@/components/app-sidebar";
+import Image from "next/image";
 
 export default function Home() {
-    const [currentPage, setCurrentPage] = useState(1)
-  const [editingUser, setEditingUser] = useState<User | null>(null)
-  const [roleFilter, setRoleFilter] = useState("All")
-  const [searchTerm, setSearchTerm] = useState("")
-  const usersPerPage = 20
+  const [currentPage, setCurrentPage] = useState(1);
+  const [roleFilter, setRoleFilter] = useState("All");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [histories, setHistory] = useState<Subscription[]>([]);
+  const [totalItems, setTotalItems] = useState(0);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [loading, setLoading] = useState(false);
+  const usersPerPage = 10;
 
-  const filteredUsers = useMemo(() => {
-    return users.filter((user) => {
-      const roleMatch = roleFilter === "All" || user.role === roleFilter
-      const searchMatch =
-        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.id.toString().includes(searchTerm) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase())
-      return roleMatch && searchMatch
-    })
-  }, [roleFilter, searchTerm])
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const offset = (currentPage - 1) * usersPerPage;
+        let url = `${process.env.BACKEND_URL}/admin/payment_history?limit=${usersPerPage}&offset=${offset}`;
+        if (startDate) {
+          url += `&start_date=${startDate}`;
+        }
+        if (endDate) {
+          url += `&end_date=${endDate}`;
+        }
+        const response = await fetch(url, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("session")}`,
+          },
+        });
 
-  const totalPages = Math.ceil(filteredUsers.length / usersPerPage)
-  const indexOfLastUser = currentPage * usersPerPage
-  const indexOfFirstUser = indexOfLastUser - usersPerPage
-  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser)
+        if (!response.ok) throw new Error("Network response was not ok");
 
-  const handlePageChange = (pageNumber: number) => {
-    setCurrentPage(pageNumber);
-  };
+        const data = await response.json();
+        setHistory(data.data);
+        setTotalItems(data.total);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleEditUser = (user: User) => {
-    setEditingUser(user)
-  }
+    fetchData();
+  }, [currentPage, startDate, endDate]);
 
-
-  const handleRoleFilterChange = (value: string) => {
-    setRoleFilter(value);
-    setCurrentPage(1);
-  };
-
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value)
-    setCurrentPage(1)
-  }
-
+  const totalPages = Math.ceil(totalItems / usersPerPage);
 
   return (
     <div className="font-[family-name:var(--font-geist-sans)]">
@@ -80,136 +80,158 @@ export default function Home() {
         <AppSidebar />
         <SidebarTrigger />
         <SidebarInset>
-          <div className="py-10">
-            <h1 className="text-2xl font-bold mb-5">To&apos;lovlar tarixi</h1>
-            <div className="flex justify-between items-center mb-4">
-              <div className="flex items-center space-x-2">
-                <Label htmlFor="role-filter">Filter by Role:</Label>
-                <Select
-                  value={roleFilter}
-                  onValueChange={handleRoleFilterChange}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select a role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All">All Roles</SelectItem>
-                    <SelectItem value="Admin">Admin</SelectItem>
-                    <SelectItem value="Editor">Editor</SelectItem>
-                    <SelectItem value="User">User</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Label htmlFor="search">Search:</Label>
-                <Input
-                  id="search"
-                  placeholder="Search by name, ID or email"
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                />
-              </div>
+          <h1 className="text-2xl font-bold mb-5">Tolovlar tarixi</h1>
+          <div className="flex items-center justify-between mb-4">
+            <Input
+              placeholder="Search..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="max-w-xs"
+            />
+            <div className="flex items-center space-x-2">
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
+              <Input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
             </div>
+            <Select value={roleFilter} onValueChange={setRoleFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All">All Roles</SelectItem>
+                <SelectItem value="Admin">Admin</SelectItem>
+                <SelectItem value="User">User</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {loading ? (
+            <div>Loading...</div>
+          ) : (
             <Table>
               <TableCaption>A list of your users.</TableCaption>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[50px]">No.</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
+                  <TableHead className="w-[50px]">ID</TableHead>
+                  <TableHead>Value</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>KanalId</TableHead>
+                  <TableHead>Tarif</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {currentUsers.map((user, index) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">
-                      {indexOfFirstUser + index + 1}
+                {histories.map((history) => (
+                  <TableRow key={history.id}>
+                    <TableCell className="font-medium">{history.id}</TableCell>
+                    <TableCell>{history.value}</TableCell>
+                    <TableCell>{history.date}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <Image
+                          src={
+                            process.env.BACKEND_URL +
+                            "/api/images/" +
+                            history.channel.photo_small
+                          }
+                          width={40}
+                          height={40}
+                          alt=""
+                          className="rounded-full mr-2"
+                        />
+                        {history.channel.name}
+                      </div>
                     </TableCell>
-                    <TableCell>{user.name}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.role}</TableCell>
-                    <TableCell className="text-right">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditUser(user)}
-                          >
-                            Edit
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px]">
-                          <DialogHeader>
-                            <DialogTitle>Edit User</DialogTitle>
-                          </DialogHeader>
-                          <div className="grid gap-4 py-4">
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor="name" className="text-right">
-                                Name
-                              </Label>
-                              <Input
-                                id="name"
-                                defaultValue={editingUser?.name}
-                                className="col-span-3"
-                              />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor="email" className="text-right">
-                                Email
-                              </Label>
-                              <Input
-                                id="email"
-                                defaultValue={editingUser?.email}
-                                className="col-span-3"
-                              />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor="role" className="text-right">
-                                Role
-                              </Label>
-                              <Select defaultValue={editingUser?.role}>
-                                <SelectTrigger className="col-span-3">
-                                  <SelectValue placeholder="Select a role" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="Admin">Admin</SelectItem>
-                                  <SelectItem value="Editor">Editor</SelectItem>
-                                  <SelectItem value="User">User</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-                          <div className="flex justify-end">
-                            <Button type="submit">Save changes</Button>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                    </TableCell>
+                    <TableCell>{history.tariff.name}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-            <div className="flex justify-center mt-4">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                (pageNumber) => (
-                  <Button
-                    key={pageNumber}
-                    variant={pageNumber === currentPage ? "default" : "outline"}
-                    size="sm"
-                    className="mx-1"
-                    onClick={() => handlePageChange(pageNumber)}
-                  >
-                    {pageNumber}
-                  </Button>
-                )
-              )}
-            </div>
+          )}
+
+          <div className="flex items-center justify-center gap-2 mt-4">
+            <Button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <span>
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
           </div>
         </SidebarInset>
       </SidebarProvider>
     </div>
   );
+}
+
+interface User {
+  id: number;
+  name: string;
+  second_name: string | null;
+  telegram_id: string;
+  phone: string;
+  choosen_taraiff_link: string | null;
+  role: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface Channel {
+  id: number;
+  name: string;
+  telegram_id: string;
+  user_id: number;
+  createdAt: string;
+  updatedAt: string;
+  info: string | null;
+  photo: string;
+  photo_small: string;
+}
+
+interface Tariff {
+  id: number;
+  name: string;
+  price: number;
+  type: string;
+  channel_id: number;
+  is_active: boolean;
+  link: string;
+  createdAt: string;
+  updatedAt: string;
+  info: string;
+}
+
+interface Subscription {
+  id: number;
+  user_id: number;
+  subscription_id: number;
+  tariff_id: number;
+  payment_id: number;
+  value: number;
+  date: string;
+  createdAt: string;
+  updatedAt: string;
+  expires_at: string;
+  transaction_id: string;
+  channel_id: number;
+  user: User;
+  channel: Channel;
+  tariff: Tariff;
 }

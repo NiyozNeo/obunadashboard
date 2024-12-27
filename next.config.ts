@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  env: {
+    BACKEND_URL: process.env.BACKEND_URL,
+  },
+  images: {
+    domains: [(process.env.BACKEND_URL ?? "").replace(/^https?:\/\//, ""), "localhost"],
+  },
 };
 
 export default nextConfig;
