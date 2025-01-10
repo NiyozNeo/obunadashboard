@@ -29,7 +29,8 @@ import Image from "next/image";
 
 export default function Home() {
   const [currentPage, setCurrentPage] = useState(1);
-  const [roleFilter, setRoleFilter] = useState("All");
+  const [channelFilter, setChannelFilter] = useState("");
+  const [channelData, setChannelData] = useState<Channel[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [histories, setHistory] = useState<Subscription[]>([]);
   const [totalItems, setTotalItems] = useState(0);
@@ -50,6 +51,11 @@ export default function Home() {
         if (endDate) {
           url += `&end_date=${endDate}`;
         }
+
+        if (channelFilter) {
+          url += `&channel_id=${channelFilter}`;
+        }
+
         const response = await fetch(url, {
           headers: {
             "Content-Type": "application/json",
@@ -58,6 +64,21 @@ export default function Home() {
         });
 
         if (!response.ok) throw new Error("Network response was not ok");
+
+        const channelResponse = await fetch(
+          `${process.env.BACKEND_URL}/admin/channels`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("session")}`,
+            },
+          }
+        );
+
+        if (!channelResponse.ok) throw new Error("Network response was not ok");
+
+        const channelData = await channelResponse.json();
+        setChannelData(channelData);
 
         const data = await response.json();
         setHistory(data.data);
@@ -70,7 +91,7 @@ export default function Home() {
     };
 
     fetchData();
-  }, [currentPage, startDate, endDate]);
+  }, [currentPage, startDate, endDate, channelFilter]);
 
   const totalPages = Math.ceil(totalItems / usersPerPage);
 
@@ -100,14 +121,18 @@ export default function Home() {
                 onChange={(e) => setEndDate(e.target.value)}
               />
             </div>
-            <Select value={roleFilter} onValueChange={setRoleFilter}>
+            <Select value={channelFilter} onValueChange={setChannelFilter}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by role" />
+                <SelectValue placeholder="Filter by channel" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="All">All Roles</SelectItem>
-                <SelectItem value="Admin">Admin</SelectItem>
-                <SelectItem value="User">User</SelectItem>
+                <SelectItem value="All">Hammasi</SelectItem>
+
+                {channelData.map((channel) => (
+                  <SelectItem key={channel.id} value={`${channel.id}`}>
+                    {channel.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
