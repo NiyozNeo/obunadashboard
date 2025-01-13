@@ -1,82 +1,137 @@
 "use client";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useMemo, useState } from "react";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useEffect, useState } from "react";
 
-
+interface User2 {
+  id: number;
+  name: string;
+  second_name: string | null;
+}
 
 export default function Home() {
-    const [currentPage, setCurrentPage] = useState(1)
-  const [editingUser, setEditingUser] = useState<User | null>(null)
-  const [roleFilter, setRoleFilter] = useState("All")
-  const [searchTerm, setSearchTerm] = useState("")
-  const usersPerPage = 20
+  const [currentPage, setCurrentPage] = useState(1);
+  const [editingChannel, setEditingChannel] = useState<Channel | null>(null);
+  const [channels, setChannels] = useState<Channel[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [totalItems, setTotalItems] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [userFilter, setUserFilter] = useState("");
+  const [users, setUsers] = useState<User2[]>([]);
+  const usersPerPage = 10;
 
-  const filteredUsers = useMemo(() => {
-    return users.filter((user) => {
-      const roleMatch = roleFilter === "All" || user.role === roleFilter
-      const searchMatch =
-        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.id.toString().includes(searchTerm) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase())
-      return roleMatch && searchMatch
-    })
-  }, [roleFilter, searchTerm])
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const offset = (currentPage - 1) * usersPerPage;
+        let url = `${process.env.BACKEND_URL}/admin/channel-all?limit=${usersPerPage}&offset=${offset}`;
+        if (searchTerm) {
+          url += `&name=${searchTerm}`;
+        }
 
-  const totalPages = Math.ceil(filteredUsers.length / usersPerPage)
-  const indexOfLastUser = currentPage * usersPerPage
-  const indexOfFirstUser = indexOfLastUser - usersPerPage
-  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser)
+        if (userFilter !== "All" && userFilter) {
+          url += `&user_id=${userFilter}`;
+        }
 
-  interface User {
-    id: number;
-    name: string;
-    email: string;
-    role: string;
-  }
+        const response = await fetch(url, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("session")}`,
+          },
+        });
 
-  const users: User[] = [
-    { id: 1, name: "John Doe", email: "john@example.com", role: "Admin" },
-    { id: 2, name: "Jane Smith", email: "jane@example.com", role: "User" },
-    { id: 3, name: "Bob Johnson", email: "bob@example.com", role: "Editor" },
-    { id: 4, name: "Alice Brown", email: "alice@example.com", role: "User" },
-    { id: 5, name: "Charlie Davis", email: "charlie@example.com", role: "Editor" },
-    { id: 6, name: "Eva White", email: "eva@example.com", role: "User" },
-    { id: 7, name: "Frank Miller", email: "frank@example.com", role: "Admin" },
-    { id: 8, name: "Grace Lee", email: "grace@example.com", role: "User" },
-    { id: 9, name: "Henry Wilson", email: "henry@example.com", role: "Editor" },
-    { id: 10, name: "Ivy Taylor", email: "ivy@example.com", role: "User" },
-  ];
+        if (!response.ok) throw new Error("Network response was not ok");
 
-  const handlePageChange = (pageNumber: number) => {
-    setCurrentPage(pageNumber);
+        const channelResponse = await fetch(
+          `${process.env.BACKEND_URL}/admin/creators`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("session")}`,
+            },
+          }
+        );
+
+        if (!channelResponse.ok) throw new Error("Network response was not ok");
+
+        const uData = await channelResponse.json();
+        setUsers(uData.data);
+
+        const data = await response.json();
+        setChannels(data.data);
+        setTotalItems(data.total);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [currentPage, searchTerm, userFilter]);
+
+  const handleEditChannel = (channel: Channel) => {
+    setEditingChannel(channel);
   };
 
-  const handleEditUser = (user: User) => {
-    setEditingUser(user)
-  }
+  const totalPages = Math.ceil(totalItems / usersPerPage);
 
+  const editChannel = async () => {
+    if (!editingChannel) return;
 
-  const handleRoleFilterChange = (value: string) => {
-    setRoleFilter(value);
-    setCurrentPage(1);
+    try {
+      // const response = await fetch(
+      //   `${process.env.BACKEND_URL}/admin/users/${editingUser.id}`,
+      //   {
+      //     method: "PUT",
+      //     headers: {
+      //       "Content-Type": "application/json",
+      //       Authorization: `Bearer ${localStorage.getItem("session")}`,
+      //     },
+      //     body: JSON.stringify({
+      //       name: name ?? editingUser.name,
+      //       role: edtingRole ?? editingUser.role,
+      //     }),
+      //   }
+      // );
+      // if (!response.ok) throw new Error("Network response was not ok");
+      // const data = await response.json();
+      // console.log(data);
+    } catch (error) {
+      console.error("Error updating user:", error);
+    }
   };
-
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value)
-    setCurrentPage(1)
-  }
-
 
   return (
     <div className="font-[family-name:var(--font-geist-sans)]">
@@ -84,63 +139,63 @@ export default function Home() {
         <AppSidebar />
         <SidebarTrigger />
         <SidebarInset>
-          <div className="py-10">
-            <h1 className="text-2xl font-bold mb-5">Kanallar</h1>
-            <div className="flex justify-between items-center mb-4">
-              <div className="flex items-center space-x-2">
-                <Label htmlFor="role-filter">Filter by Role:</Label>
-                <Select
-                  value={roleFilter}
-                  onValueChange={handleRoleFilterChange}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select a role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All">All Roles</SelectItem>
-                    <SelectItem value="Admin">Admin</SelectItem>
-                    <SelectItem value="Editor">Editor</SelectItem>
-                    <SelectItem value="User">User</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Label htmlFor="search">Search:</Label>
-                <Input
-                  id="search"
-                  placeholder="Search by name, ID or email"
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                />
-              </div>
-            </div>
+          <h1 className="text-2xl font-bold mb-5">Channels</h1>
+          <div className="flex items-center justify-between mb-4">
+            <Input
+              placeholder="Search..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="max-w-xs"
+            />
+            <Select value={userFilter} onValueChange={setUserFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All">Hammasi</SelectItem>
+                {users?.map((user) => (
+                  <SelectItem key={user.id} value={`${user.id}`}>
+                    {user.name + (user.second_name ? " " + user.second_name : "")}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {loading ? (
+            <div>Loading...</div>
+          ) : (
             <Table>
               <TableCaption>A list of your users.</TableCaption>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[50px]">No.</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
+                  <TableHead className="w-[50px]">ID</TableHead>
+                  <TableHead>Nomi</TableHead>
+                  <TableHead>Info</TableHead>
+                  <TableHead>Telegram id</TableHead>
+                  <TableHead>Tariflar</TableHead>
+                  <TableHead>Obunachilar</TableHead>
+                  <TableHead>Egasi</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {currentUsers.map((user, index) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">
-                      {indexOfFirstUser + index + 1}
-                    </TableCell>
-                    <TableCell>{user.name}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.role}</TableCell>
+                {channels.map((channel) => (
+                  <TableRow key={channel.id}>
+                    <TableCell className="font-medium">{channel.id}</TableCell>
+                    <TableCell>{channel.name}</TableCell>
+                    <TableCell>{channel.info}</TableCell>
+                    <TableCell>{channel.telegram_id}</TableCell>
+                    <TableCell>{channel.tariffsCount} ta</TableCell>
+                    <TableCell>{channel.subscribersCount} ta</TableCell>
+                    <TableCell>{channel.user.name}</TableCell>
                     <TableCell className="text-right">
                       <Dialog>
                         <DialogTrigger asChild>
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleEditUser(user)}
+                            onClick={() => handleEditChannel(channel)}
                           >
                             Edit
                           </Button>
@@ -156,17 +211,7 @@ export default function Home() {
                               </Label>
                               <Input
                                 id="name"
-                                defaultValue={editingUser?.name}
-                                className="col-span-3"
-                              />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor="email" className="text-right">
-                                Email
-                              </Label>
-                              <Input
-                                id="email"
-                                defaultValue={editingUser?.email}
+                                defaultValue={editingChannel?.name}
                                 className="col-span-3"
                               />
                             </div>
@@ -174,20 +219,12 @@ export default function Home() {
                               <Label htmlFor="role" className="text-right">
                                 Role
                               </Label>
-                              <Select defaultValue={editingUser?.role}>
-                                <SelectTrigger className="col-span-3">
-                                  <SelectValue placeholder="Select a role" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="Admin">Admin</SelectItem>
-                                  <SelectItem value="Editor">Editor</SelectItem>
-                                  <SelectItem value="User">User</SelectItem>
-                                </SelectContent>
-                              </Select>
                             </div>
                           </div>
                           <div className="flex justify-end">
-                            <Button type="submit">Save changes</Button>
+                            <Button onClick={editChannel} type="submit">
+                              Save changes
+                            </Button>
                           </div>
                         </DialogContent>
                       </Dialog>
@@ -196,24 +233,70 @@ export default function Home() {
                 ))}
               </TableBody>
             </Table>
-            <div className="flex justify-center mt-4">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                (pageNumber) => (
-                  <Button
-                    key={pageNumber}
-                    variant={pageNumber === currentPage ? "default" : "outline"}
-                    size="sm"
-                    className="mx-1"
-                    onClick={() => handlePageChange(pageNumber)}
-                  >
-                    {pageNumber}
-                  </Button>
-                )
-              )}
-            </div>
+          )}
+
+          <div className="flex items-center justify-center gap-2 mt-4">
+            <Button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <span>
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
           </div>
         </SidebarInset>
       </SidebarProvider>
     </div>
   );
+}
+
+interface Tariff {
+  id: number;
+  name: string;
+  price: number;
+  type: string;
+  channel_id: number;
+  is_active: boolean;
+  link: string;
+  createdAt: string;
+  updatedAt: string;
+  info: string | null;
+}
+
+interface User {
+  id: number;
+  name: string;
+  second_name: string | null;
+  telegram_id: string;
+  phone: string;
+  choosen_taraiff_link: string | null;
+  role: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface Channel {
+  id: number;
+  name: string;
+  telegram_id: string;
+  user_id: number;
+  createdAt: string;
+  updatedAt: string;
+  info: string | null;
+  photo: string;
+  photo_small: string;
+  tariffs: Tariff[];
+  user: User;
+  tariffsCount: number;
+  subscribersCount: number;
 }
