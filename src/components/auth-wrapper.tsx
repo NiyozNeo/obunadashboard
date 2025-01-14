@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
+// import { useEffect } from "react";
+// import { useRouter, usePathname } from "next/navigation";
 
-const protectedRoutes = ["/", "/dashboard", "/profile"];
-const publicRoutes = ["/login", "/signup"];
+// const protectedRoutes = ["/", "/dashboard", "/profile"];
+// const publicRoutes = ["/login", "/signup"];
 
 export function AuthWrapper({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
-  const pathname = usePathname();
+  // const router = useRouter();
+  // const pathname = usePathname();
 
   // useEffect(() => {
   //   // Get session from localStorage
