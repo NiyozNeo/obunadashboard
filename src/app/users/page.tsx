@@ -150,7 +150,7 @@ export default function Home() {
             <div>Loading...</div>
           ) : (
             <Table>
-              <TableCaption>A list of your users.</TableCaption>
+              <TableCaption>foydalanuvchilar royxati</TableCaption>
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[50px]">ID</TableHead>
